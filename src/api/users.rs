@@ -330,7 +330,15 @@ pub(super) async fn delete_user(
 
     cfg.validate()
         .map_err(|e| ApiFailure::bad_request(format!("config validation failed: {}", e)))?;
-    let revision = save_config_to_disk(&shared.config_path, &cfg).await?;
+    let touched_sections = [
+        AccessSection::Users,
+        AccessSection::UserAdTags,
+        AccessSection::UserMaxTcpConns,
+        AccessSection::UserExpirations,
+        AccessSection::UserDataQuota,
+        AccessSection::UserMaxUniqueIps,
+    ];
+    let revision = save_access_sections_to_disk(&shared.config_path, &cfg, &touched_sections).await?;
     drop(_guard);
     shared.ip_tracker.remove_user_limit(user).await;
     shared.ip_tracker.clear_user_ips(user).await;
